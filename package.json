@@ -1,0 +1,22 @@
+{
+  "name": "@sarahkao-prog/hex-slack-source",
+  "version": "0.1.0",
+  "description": "Shared Hex-snapshot-from-Slack source for Fortis community Slack bots (Fern, Fleur, Sprout)",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --test test/"
+  },
+  "keywords": ["slack", "hex", "fortis"],
+  "author": "Sarah Kao",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sarahkao-prog/hex-slack-source.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
