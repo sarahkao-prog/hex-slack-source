@@ -50,14 +50,14 @@ test('fetch flags snap as stale past threshold', async () => {
   assert.equal(snap.stale, true);
 });
 
-test('fetch returns null when no snapshot in channel', async () => {
+test('fetch returns a stale sentinel when no snapshots in channel', async () => {
   const client = makeClient([{ ts: '1', text: 'unrelated' }]);
   const src = createSource({
     type: 'health-snapshot',
     slack: { channel: 'C1', client },
     parser: 'standard-json',
   });
-  assert.equal(await src.fetch(), null);
+  assert.deepEqual(await src.fetch(), { fetchedAt: null, stale: true });
 });
 
 test('fetchOrDefer returns deferred:false when fresh on first try', async () => {
@@ -145,6 +145,19 @@ test('fetchBaseline returns N most-recent unique-day snapshots excluding today',
   // Neither should be marked stale (baselines are expected to be old)
   assert.equal(baseline[0].stale, false);
   assert.equal(baseline[1].stale, false);
+});
+
+test('fetch sentinel is safe to consume via .stale check', async () => {
+  const client = makeClient([{ ts: '1', text: 'unrelated' }]);
+  const src = createSource({
+    type: 'health-snapshot',
+    slack: { channel: 'C1', client },
+    parser: 'standard-json',
+  });
+  const snap = await src.fetch();
+  // Caller pattern: check .stale before dereferencing other fields
+  assert.equal(snap.stale, true);
+  assert.equal(snap.fetchedAt, null);
 });
 
 test('createSource rejects unsupported type', () => {

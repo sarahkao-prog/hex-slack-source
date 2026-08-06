@@ -42,7 +42,7 @@ function createSource(config) {
 
   async function fetch() {
     const snaps = await loadParsedSnapshots();
-    if (snaps.length === 0) return null;
+    if (snaps.length === 0) return { fetchedAt: null, stale: true };
     snaps.sort((a, b) => b.fetchedAt - a.fetchedAt);
     const newest = snaps[0];
     return { ...newest, stale: isStale(newest.fetchedAt, staleAfterMs) };

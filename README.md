@@ -42,6 +42,7 @@ const bloomHealth = createSource({
 
 // On-demand — no retry, no nudge:
 const snap = await bloomHealth.fetch();
+// `fetch()` never returns null: on empty channel or Slack fetch failure it returns a stale sentinel `{ fetchedAt: null, stale: true }`. Callers must check `.stale` before dereferencing other fields.
 
 // Scheduled — retries up to 30min, posts nudge on give-up:
 const { snap, deferred, attempts } = await bloomHealth.fetchOrDefer();
