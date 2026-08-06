@@ -4,17 +4,19 @@ Shared Hex-snapshot-from-Slack source for Fortis community Slack bots (Fern, Fle
 
 ## Install
 
+Consumed as a git URL dependency — no npm registry, no auth token required.
+
 ```bash
-npm install @sarahkao-prog/hex-slack-source
+npm install github:sarahkao-prog/hex-slack-source#v0.1.0
 ```
 
-Consumers need an `.npmrc` in the repo root pointing the `@sarahkao-prog` scope at GitHub Packages:
+Consumer `package.json` ends up with:
 
-```
-@sarahkao-prog:registry=https://npm.pkg.github.com
+```json
+"@sarahkao-prog/hex-slack-source": "github:sarahkao-prog/hex-slack-source#v0.1.0"
 ```
 
-Public package — no auth token required for `npm install`.
+Upgrades: re-tag the library (`git tag vX.Y.Z && git push --tags`), then in each consumer bump the ref in `package.json` and run `npm install`. Railway auto-installs from the git URL on redeploy.
 
 ## Usage
 
@@ -58,12 +60,11 @@ Library reads Slack messages whose text contains `[hex-snapshot]` and a fenced `
 node --test test/
 ```
 
-## Publishing
+## Releasing a new version
 
 ```bash
-npm version patch          # or minor/major
-git push --follow-tags
-GITHUB_TOKEN=$(gh auth token) npm publish
+npm version patch          # or minor/major — updates package.json + creates a git tag
+git push --follow-tags     # pushes the tag to GitHub
 ```
 
-If `gh auth token` output lacks `write:packages` scope, create a PAT at https://github.com/settings/tokens with `write:packages` + `read:packages` and use it as `GITHUB_TOKEN`.
+Then in each consumer (`fleur-slackbot`, `twilight-slackbot`, `sprout-bot`) bump the `#vX.Y.Z` ref in `package.json` and run `npm install`.
