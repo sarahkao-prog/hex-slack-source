@@ -1,6 +1,6 @@
 {
   "name": "@sarahkao-prog/hex-slack-source",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Shared Hex-snapshot-from-Slack source for Fortis community Slack bots (Fern, Fleur, Sprout)",
   "main": "src/index.js",
   "scripts": {
