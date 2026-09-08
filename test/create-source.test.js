@@ -122,6 +122,31 @@ test('fetchOrDefer skips nudge when nudge config absent, still returns deferred:
   assert.equal(posts.length, 0);
 });
 
+test('fetchBaseline bins by metricDay when present (not Slack post date)', async () => {
+  // Regression: 2026-09-08 Fleur false alarm. A Sunday snapshot representing
+  // Saturday's data was treated as distinct from a Monday snapshot also
+  // representing Saturday's data, producing a bogus non-adjacent DoD.
+  const now = Date.now();
+  const oneDay = 24 * 60 * 60 * 1000;
+  const client = makeClient([
+    // Two different Slack post-days, SAME metricDay — must dedup to one entry.
+    jsonMsg('2026-09-06', now - 1000, { metricDay: '2026-09-06' }),
+    jsonMsg('2026-09-06', now - oneDay, { metricDay: '2026-09-06' }),
+    jsonMsg('2026-09-02', now - 5 * oneDay, { metricDay: '2026-09-02' }),
+    jsonMsg('2026-09-01', now - 6 * oneDay, { metricDay: '2026-09-01' }),
+  ]);
+  const src = createSource({
+    type: 'health-snapshot',
+    slack: { channel: 'C1', client },
+    parser: 'standard-json',
+  });
+  const baseline = await src.fetchBaseline({ days: 3, excludeMetricDay: '2026-09-06' });
+  // Sept 6 excluded (matches excludeMetricDay), leaving only Sept 2 and Sept 1
+  assert.equal(baseline.length, 2);
+  assert.equal(baseline[0].metricDay, '2026-09-02');
+  assert.equal(baseline[1].metricDay, '2026-09-01');
+});
+
 test('fetchBaseline returns N most-recent unique-day snapshots excluding today', async () => {
   // Build a mix: 2 snapshots today, 1 yesterday, 1 two days ago
   const now = Date.now();

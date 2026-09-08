@@ -56,19 +56,37 @@ function createSource(config) {
     return { snap, attempts, deferred: gaveUp };
   }
 
-  async function fetchBaseline({ days = 3 } = {}) {
+  // Bins by `metricDay` (the day the data represents) — falls back to the
+  // Slack-post ISO date only when the snapshot lacks `metricDay`. Fleur's
+  // 2026-09-08 false-alarm bug was that a Sunday snapshot representing
+  // Saturday's data was treated as a distinct day from Monday's post that
+  // *also* represented Saturday's data, producing a non-adjacent DoD.
+  //
+  // Callers who know the current snap's metricDay should pass it via
+  // `excludeMetricDay` so baseline[0] is the metric-day before, not the
+  // same day.
+  async function fetchBaseline({ days = 3, excludeMetricDay = null } = {}) {
     const snaps = await loadParsedSnapshots();
     if (snaps.length === 0) return [];
     snaps.sort((a, b) => b.fetchedAt - a.fetchedAt);
-    const todayISO = new Date().toISOString().split('T')[0];
-    const uniqueByDate = new Map();
+
+    const dayKey = (s) => s.metricDay || new Date(s.fetchedAt).toISOString().split('T')[0];
+    const excludeKey = excludeMetricDay || new Date().toISOString().split('T')[0];
+
+    const uniqueByDay = new Map();
     for (const s of snaps) {
-      const iso = new Date(s.fetchedAt).toISOString().split('T')[0];
-      if (iso === todayISO) continue;
-      if (!uniqueByDate.has(iso)) uniqueByDate.set(iso, s);
+      const key = dayKey(s);
+      if (key === excludeKey) continue;
+      if (!uniqueByDay.has(key)) uniqueByDay.set(key, s);
     }
-    return Array.from(uniqueByDate.values())
-      .sort((a, b) => b.fetchedAt - a.fetchedAt)
+
+    return Array.from(uniqueByDay.values())
+      .sort((a, b) => {
+        const ka = dayKey(a);
+        const kb = dayKey(b);
+        if (ka !== kb) return kb.localeCompare(ka);
+        return b.fetchedAt - a.fetchedAt;
+      })
       .slice(0, days)
       .map((s) => ({ ...s, stale: false }));
   }
